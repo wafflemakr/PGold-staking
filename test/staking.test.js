@@ -129,8 +129,8 @@ contract("Staking", ([owner, user1, user2, user3, random]) => {
     });
 
     it("user can unstake after expiration", async () => {
-      // 6 months after
-      await advanceTimeAndBlock(180 * 24 * 60 * 60);
+      // 6 months  and 1 second after
+      await advanceTimeAndBlock(180 * 24 * 60 * 60 + 1);
       await staking.unstake(1, { from: user1 });
     });
 
@@ -146,6 +146,16 @@ contract("Staking", ([owner, user1, user2, user3, random]) => {
 
       assert.equal(user, user1);
       assert.equal(stakeId, 1);
+      assert.equal(
+        reward,
+        Math.floor(
+          Number(
+            (amountStaked * (block.timestamp - timeStaked) * rate) /
+              100000 /
+              (365 * 24 * 60 * 60)
+          )
+        )
+      );
       assert.equal(
         amountToken,
         Math.floor(

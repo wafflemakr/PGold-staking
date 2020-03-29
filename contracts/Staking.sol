@@ -26,7 +26,7 @@ contract Staking is Ownable, ReentrancyGuard {
         uint256 stakeId,
         uint256 amountToken,
         uint256 timestamp,
-        uint8 option
+        uint256 rate
     );
     event Unstaked(
         address indexed user,
@@ -122,20 +122,21 @@ contract Staking is Ownable, ReentrancyGuard {
     function calculateRewards(address user, uint256 stakeId)
         public
         view
-        returns (uint256 rewards)
+        returns (uint256 rewards, bool canClaim)
     {
         Stake memory _stake = userStakesById[user][stakeId];
 
-        if (block.timestamp > getStakeEndTime(user, stakeId)) {
-            uint256 secondsPassed = block.timestamp.sub(_stake.timeStaked);
+        uint256 secondsPassed = block.timestamp.sub(_stake.timeStaked);
 
-            rewards = _stake
-                .amountStaked
-                .mul(secondsPassed)
-                .mul(_stake.rate)
-                .div(1000) // format rate to decimal
-                .div(100) // format to percentage
-                .div(365 days); // format per second
+        rewards = _stake
+            .amountStaked
+            .mul(secondsPassed)
+            .mul(_stake.rate)
+            .div(1000) // format rate to decimal
+            .div(100) // format to percentage
+            .div(365 days); // format per second
+        if (block.timestamp > getStakeEndTime(user, stakeId)) {
+            canClaim = true;
         }
     }
 
@@ -164,11 +165,12 @@ contract Staking is Ownable, ReentrancyGuard {
         view
         returns (
             uint256 amountStaked,
-            uint256 availableRewards,
+            uint256 currentRewards,
             uint256 stakeEndTime,
             uint256 timeStaked,
             uint256 rate,
             bool claimed,
+            bool canClaim,
             uint8 option
         )
     {
@@ -180,7 +182,7 @@ contract Staking is Ownable, ReentrancyGuard {
         claimed = _stake.claimed;
         option = _stake.option;
 
-        availableRewards = calculateRewards(user, stakeId);
+        (currentRewards, canClaim) = calculateRewards(user, stakeId);
         stakeEndTime = getStakeEndTime(user, stakeId);
     }
 
@@ -263,7 +265,7 @@ contract Staking is Ownable, ReentrancyGuard {
             user.totalStakes,
             amount,
             block.timestamp,
-            option
+            stakeRate
         );
     }
 
@@ -274,12 +276,13 @@ contract Staking is Ownable, ReentrancyGuard {
 
         require(!_stake.claimed, "Staked already claimed");
         require(user.stakes.exists(stakeId), "Not stake owner");
-        require(
-            block.timestamp > getStakeEndTime(msg.sender, stakeId),
-            "Stake time not finished"
+
+        (uint256 rewards, bool canClaim) = calculateRewards(
+            msg.sender,
+            stakeId
         );
 
-        uint256 rewards = calculateRewards(msg.sender, stakeId);
+        require(!canClaim, "Stake time not finished");
 
         uint256 amountToSend = _stake.amountStaked.add(rewards);
 
