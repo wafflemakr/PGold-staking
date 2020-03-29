@@ -107,15 +107,15 @@ contract Staking is Ownable, ReentrancyGuard {
         Stake memory _stake = userStakesById[user][stakeId];
 
         // Testing timeframes
-        if (_stake.option == 1) endTime = _stake.timeStaked.add(6 * 60 seconds);
-        if (_stake.option == 2)
-            endTime = _stake.timeStaked.add(12 * 60 seconds);
-        if (_stake.option == 3)
-            endTime = _stake.timeStaked.add(18 * 60 seconds);
+        // if (_stake.option == 1) endTime = _stake.timeStaked.add(6 * 60 seconds);
+        // if (_stake.option == 2)
+        //     endTime = _stake.timeStaked.add(12 * 60 seconds);
+        // if (_stake.option == 3)
+        //     endTime = _stake.timeStaked.add(18 * 60 seconds);
 
-        // if (_stake.option == 1) endTime = _stake.timeStaked.add(6 * 30 days);
-        // if (_stake.option == 2) endTime = _stake.timeStaked.add(12 * 30 days);
-        // if (_stake.option == 3) endTime = _stake.timeStaked.add(18 * 30 days);
+        if (_stake.option == 1) endTime = _stake.timeStaked.add(6 * 30 days);
+        if (_stake.option == 2) endTime = _stake.timeStaked.add(12 * 30 days);
+        if (_stake.option == 3) endTime = _stake.timeStaked.add(18 * 30 days);
     }
 
     /// @notice Calculate available rewards of a stake
@@ -127,14 +127,15 @@ contract Staking is Ownable, ReentrancyGuard {
         Stake memory _stake = userStakesById[user][stakeId];
 
         if (block.timestamp > getStakeEndTime(user, stakeId)) {
-            uint256 timePassed = block.timestamp.sub(_stake.timeStaked);
+            uint256 secondsPassed = block.timestamp.sub(_stake.timeStaked);
 
             rewards = _stake
                 .amountStaked
-                .mul(timePassed)
-                .mul(rates[_stake.option])
-                .div(1000)
-                .div(365 days);
+                .mul(secondsPassed)
+                .mul(_stake.rate)
+                .div(1000) // format rate to decimal
+                .div(100) // format to percentage
+                .div(365 days); // format per second
         }
     }
 
@@ -188,6 +189,10 @@ contract Staking is Ownable, ReentrancyGuard {
     /// @notice User Registration with referral Id
     /// @param refAddress user's referrer address
     function register(address refAddress) external {
+        User memory user = userByAddress[msg.sender];
+
+        require(!user.registered, "You cannot register again");
+
         // If user registers with a referral link
         if (refAddress != address(0)) {
             User storage user = userByAddress[refAddress];
@@ -202,6 +207,7 @@ contract Staking is Ownable, ReentrancyGuard {
         emit NewUser(msg.sender, refAddress);
     }
 
+    /// @dev internal function to create user
     function _createUser(address refAddress) internal {
         // Create new ref Id for user
         totalUsers++;
