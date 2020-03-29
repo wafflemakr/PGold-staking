@@ -1,4 +1,4 @@
-pragma solidity 0.5.10;
+pragma solidity ^0.5.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/ownership/Ownable.sol";
@@ -23,12 +23,14 @@ contract Staking is Ownable, ReentrancyGuard {
     event NewUser(address user, address referrer);
     event Staked(
         address indexed user,
+        uint256 stakeId,
         uint256 amountToken,
         uint256 timestamp,
         uint8 option
     );
     event Unstaked(
         address indexed user,
+        uint256 stakeId,
         uint256 amountToken,
         uint256 timestamp
     );
@@ -67,7 +69,7 @@ contract Staking is Ownable, ReentrancyGuard {
     }
 
     mapping(address => User) userByAddress;
-    mapping(uint256 => Stake) stakeById;
+    mapping(address => mapping(uint256 => Stake)) userStakesById;
 
     modifier onlyActive() {
         require(!isPaused, "contract is not active");
@@ -87,19 +89,22 @@ contract Staking is Ownable, ReentrancyGuard {
         _;
     }
 
+    /// @notice initialize contract
     constructor(address _pgold, address _pool) public {
         pgold = IERC20(_pgold);
         pool = _pool;
     }
 
+    // GETTERS
+
     /// @notice Get stake expiration time
     /// @param stakeId id of the stake to query
-    function getStakeEndTime(uint256 stakeId)
+    function getStakeEndTime(address user, uint256 stakeId)
         public
         view
         returns (uint256 endTime)
     {
-        Stake memory _stake = stakeById[stakeId];
+        Stake memory _stake = userStakesById[user][stakeId];
 
         // Testing timeframes
         if (_stake.option == 1) endTime = _stake.timeStaked.add(6 * 60 seconds);
@@ -114,14 +119,14 @@ contract Staking is Ownable, ReentrancyGuard {
     }
 
     /// @notice Calculate available rewards of a stake
-    function calculateRewards(uint256 stakeId)
+    function calculateRewards(address user, uint256 stakeId)
         public
         view
         returns (uint256 rewards)
     {
-        Stake memory _stake = stakeById[stakeId];
+        Stake memory _stake = userStakesById[user][stakeId];
 
-        if (block.timestamp > getStakeEndTime(stakeId)) {
+        if (block.timestamp > getStakeEndTime(user, stakeId)) {
             uint256 timePassed = block.timestamp.sub(_stake.timeStaked);
 
             rewards = _stake
@@ -133,10 +138,57 @@ contract Staking is Ownable, ReentrancyGuard {
         }
     }
 
+    /// @notice Get User Info
+    function getUserInfo(address user)
+        external
+        view
+        returns (
+            address referrer,
+            uint256 activeStakes,
+            uint256 amountReferees,
+            bool isRegistered
+        )
+    {
+        User storage _user = userByAddress[user];
+
+        referrer = _user.referrer;
+        activeStakes = _user.stakes.count();
+        isRegistered = _user.registered;
+        amountReferees = _user.referees.count();
+    }
+
+    /// @notice Get Stake Details
+    function getStakeDetails(address user, uint256 stakeId)
+        external
+        view
+        returns (
+            uint256 amountStaked,
+            uint256 availableRewards,
+            uint256 stakeEndTime,
+            uint256 timeStaked,
+            uint256 rate,
+            bool claimed,
+            uint8 option
+        )
+    {
+        Stake storage _stake = userStakesById[user][stakeId];
+
+        amountStaked = _stake.amountStaked;
+        timeStaked = _stake.timeStaked;
+        rate = _stake.rate;
+        claimed = _stake.claimed;
+        option = _stake.option;
+
+        availableRewards = calculateRewards(user, stakeId);
+        stakeEndTime = getStakeEndTime(user, stakeId);
+    }
+
+    // MAIN FUNCTIONS
+
     /// @notice User Registration with referral Id
     /// @param refAddress user's referrer address
     function register(address refAddress) external {
-        // If register with a referral link, address is not empty
+        // If user registers with a referral link
         if (refAddress != address(0)) {
             User storage user = userByAddress[refAddress];
             if (user.registered) {
@@ -144,6 +196,7 @@ contract Staking is Ownable, ReentrancyGuard {
                 user.referees.insert(msg.sender);
             }
         }
+
         _createUser(refAddress);
 
         emit NewUser(msg.sender, refAddress);
@@ -179,14 +232,17 @@ contract Staking is Ownable, ReentrancyGuard {
         User storage user = userByAddress[msg.sender];
         user.totalStakes++;
 
-        uint256 amountReferees = user.referees.count();
-
-        uint256 stakeRate = rates[option].add(amountReferees.mul(1000));
+        // Calculate stake rate for given option
+        uint256 refereesCountReward = user.referees.count().mul(1000); // add +1% for each referee
+        uint256 refLinkReward = user.referrer != address(0) ? 2000 : 0; // add +2% if used ref link
+        uint256 stakeRate = rates[option].add(refereesCountReward).add(
+            refLinkReward
+        );
 
         // If rate greater than 15% lower it to 15%
         if (stakeRate > 15000) stakeRate = 15000;
 
-        stakeById[user.totalStakes] = Stake(
+        userStakesById[msg.sender][user.totalStakes] = Stake(
             amount,
             block.timestamp,
             stakeRate,
@@ -196,22 +252,28 @@ contract Staking is Ownable, ReentrancyGuard {
 
         user.stakes.insert(user.totalStakes);
 
-        emit Staked(msg.sender, amount, block.timestamp, option);
+        emit Staked(
+            msg.sender,
+            user.totalStakes,
+            amount,
+            block.timestamp,
+            option
+        );
     }
 
     /// @notice Unstake specific stake of PGOLD Tokens
     function unstake(uint256 stakeId) external nonReentrant {
         User storage user = userByAddress[msg.sender];
-        Stake storage _stake = stakeById[stakeId];
+        Stake storage _stake = userStakesById[msg.sender][stakeId];
 
         require(!_stake.claimed, "Staked already claimed");
         require(user.stakes.exists(stakeId), "Not stake owner");
         require(
-            block.timestamp > getStakeEndTime(stakeId),
+            block.timestamp > getStakeEndTime(msg.sender, stakeId),
             "Stake time not finished"
         );
 
-        uint256 rewards = calculateRewards(stakeId);
+        uint256 rewards = calculateRewards(msg.sender, stakeId);
 
         uint256 amountToSend = _stake.amountStaked.add(rewards);
 
@@ -229,7 +291,7 @@ contract Staking is Ownable, ReentrancyGuard {
             );
         }
 
-        emit Unstaked(msg.sender, amountToSend, block.timestamp);
+        emit Unstaked(msg.sender, stakeId, amountToSend, block.timestamp);
     }
 
     // OWNER SETTINGS

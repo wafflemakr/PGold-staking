@@ -8,7 +8,8 @@
   },
   "scripts": {
     "chain": "ganache-cli --networkId 999 -m \"satisfy much expire skull nice regret suit vessel deposit swamp tragic merge\"",
-    "deploy": "truffle migrate --reset --network rinkeby"
+    "deploy": "truffle migrate --reset --network rinkeby",
+    "flatten": "truffle-flattener contracts/Staking.sol > flats/Staking.sol"
   },
   "keywords": [],
   "author": "",
