@@ -19,6 +19,7 @@ const formatDate = timestamp => {
 };
 
 export default function StakeInfo({ info, goBack }) {
+  console.log(info);
   return (
     <Container className="justify-content-center">
       <ListGroup className="list-group-flush mb-3">
@@ -30,6 +31,16 @@ export default function StakeInfo({ info, goBack }) {
         <ListGroupItem>
           <strong>Amount: </strong>
           <span>{info.amountStaked} GOLD</span>
+        </ListGroupItem>
+
+        <ListGroupItem>
+          <strong>Reward Program Option Chosen: </strong>
+          <span>{info.option}</span>
+        </ListGroupItem>
+
+        <ListGroupItem>
+          <strong>Anual Rate: </strong>
+          <span>{info.rate / 1000} %</span>
         </ListGroupItem>
 
         <ListGroupItem>
@@ -48,7 +59,7 @@ export default function StakeInfo({ info, goBack }) {
         </ListGroupItem>
       </ListGroup>
 
-      <Row className="justify-content-around">
+      <Row className="justify-content-around p-3">
         <Button
           disabled={!info.canClaim}
           variant={info.canClaim ? "outline-info" : "outline-dark"}

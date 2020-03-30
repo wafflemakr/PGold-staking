@@ -81,7 +81,7 @@ export default function Dashboard({ account }) {
 
   return (
     <Row className="justify-content-center">
-      <div style={{ width: "80%" }}>
+      <div style={{ width: "85%" }}>
         <Card className="mt-5 mb-3">
           <Card.Title className="text-center mt-3 p-3 font-weight-bold">
             YOUR DASHBOARD

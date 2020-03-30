@@ -97,7 +97,9 @@ function App() {
       <Container>
         <Router history={history}>
           <Header account={account} connectWeb3={connectWeb3} />
-          Connect to your web3 Wallet
+          <div className="p-5">
+            <h3>Connect to your web3 Wallet</h3>
+          </div>
         </Router>
       </Container>
     );
@@ -107,7 +109,9 @@ function App() {
       <Container>
         <Router history={history}>
           <Header account={account} connectWeb3={connectWeb3} />
-          Please switch to Rinkeby Network
+          <div className="p-5">
+            <h3> Please switch to Rinkeby Network</h3>
+          </div>
         </Router>
       </Container>
     );
