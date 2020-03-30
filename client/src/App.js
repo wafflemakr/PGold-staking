@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Switch, Router, Route, Redirect } from "react-router-dom";
-import { Container } from "react-bootstrap";
+import { Container, Row } from "react-bootstrap";
 import "./App.css";
 
 import Header from "./components/Header";
 import Dashboard from "./components/Dashboard";
 import Stakes from "./components/Stakes/";
+import RewardProgram from "./components/RewardProgram";
+import ReactLoading from "react-loading";
 
 import history from "./history";
 
@@ -18,6 +20,8 @@ const Web3 = window.Web3;
 
 function App() {
   const [account, setAccount] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   const connectWeb3 = useCallback(async () => {
     // Modern dapp browsers...
     if (window.ethereum) {
@@ -53,13 +57,16 @@ function App() {
   }, []);
 
   useEffect(() => {
-    connectWeb3();
-  }, [account]);
+    connectWeb3().then(() => setLoading(false));
+  }, [account, connectWeb3]);
 
   const routes = (
     <Switch>
       <Route path="/stakes" exact>
         <Stakes account={account} />
+      </Route>
+      <Route path="/reward" exact>
+        <RewardProgram />
       </Route>
       <Route path="/">
         <Dashboard account={account} />
@@ -67,6 +74,23 @@ function App() {
       <Redirect to="/" />
     </Switch>
   );
+  if (loading)
+    return (
+      <Container>
+        <Router history={history}>
+          <Header account={account} connectWeb3={connectWeb3} />
+          <Row className="justify-content-center mt-5">
+            <ReactLoading
+              className="text-center"
+              type="spin"
+              color="#343a40"
+              height={333}
+              width={187}
+            />
+          </Row>
+        </Router>
+      </Container>
+    );
 
   if (!account)
     return (

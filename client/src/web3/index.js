@@ -1,8 +1,4 @@
-import { STAKING_CONTRACT, TOKEN_ADDRESS, ZERO_ADDRESS } from "./constants";
-import erc20Abi from "./abis/erc20";
-import stakingAbi from "./abis/staking";
-
-const Web3 = window.Web3;
+import { STAKING_CONTRACT, ZERO_ADDRESS } from "./constants";
 
 export const getUserInfo = async user => {
   const userInfo = await window.staking.methods.getUserInfo(user).call();

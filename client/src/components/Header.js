@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Navbar, Nav, Button } from "react-bootstrap";
 
@@ -12,6 +12,9 @@ export default function Header({ account, connectWeb3 }) {
       </Nav.Link>
       <Nav.Link as={NavLink} to="/stakes" exact>
         Stakes
+      </Nav.Link>
+      <Nav.Link as={NavLink} to="/reward" exact>
+        Reward Program
       </Nav.Link>
     </>
   );

@@ -9,9 +9,13 @@ import {
 } from "react-bootstrap";
 
 const formatDate = timestamp => {
-  const date = new Date();
-  date.setTime(timestamp);
-  return String(date);
+  let date = new Date(null);
+  date.setSeconds(timestamp);
+  return date
+    .toISOString()
+    .slice(0, 19)
+    .replace(/-/g, "/")
+    .replace("T", " ");
 };
 
 export default function StakeInfo({ info, goBack }) {
@@ -35,12 +39,12 @@ export default function StakeInfo({ info, goBack }) {
 
         <ListGroupItem>
           <strong>Start Time: </strong>
-          <span>{formatDate(info.timeStaked * 1000)}</span>
+          <span>{formatDate(info.timeStaked)}</span>
         </ListGroupItem>
 
         <ListGroupItem>
           <strong>Claim Time: </strong>
-          <span>{formatDate(info.stakeEndTime * 1000)}</span>
+          <span>{formatDate(info.stakeEndTime)}</span>
         </ListGroupItem>
       </ListGroup>
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 
-import { Card, Row } from "react-bootstrap";
+import { Container, Card, Row } from "react-bootstrap";
+import ReactLoading from "react-loading";
 
 import StakeList from "./StakeList";
 import StakeInfo from "./StakeInfo";
@@ -10,6 +11,7 @@ import { getStakeList, getStakeDetails } from "../../web3";
 export default function Stakes({ account }) {
   const [stakes, setStakes] = useState([]);
   const [show, setShow] = useState("list");
+  const [loading, setLoading] = useState(true);
   const [stakeInfo, setStakeInfo] = useState(null);
 
   const handleStakeCheck = async id => {
@@ -19,8 +21,30 @@ export default function Stakes({ account }) {
   };
 
   useEffect(() => {
-    getStakeList(account).then(_stakes => setStakes(_stakes));
-  }, []);
+    getStakeList(account).then(_stakes => {
+      setStakes(_stakes);
+      setLoading(false);
+    });
+  }, [account]);
+
+  if (loading)
+    return (
+      <Row className="justify-content-center mt-5">
+        <ReactLoading
+          className="text-center"
+          type="spin"
+          color="#343a40"
+          height={333}
+          width={187}
+        />
+      </Row>
+    );
+  if (!loading && stakes.length === 0)
+    return (
+      <Container className="p-5">
+        <h3>You don't have any stakes yet!</h3>
+      </Container>
+    );
 
   return (
     <Row className="justify-content-center">
