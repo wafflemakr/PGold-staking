@@ -107,15 +107,15 @@ contract Staking is Ownable, ReentrancyGuard {
         Stake memory _stake = userStakesById[user][stakeId];
 
         // Testing timeframes
-        // if (_stake.option == 1) endTime = _stake.timeStaked.add(6 * 60 seconds);
-        // if (_stake.option == 2)
-        //     endTime = _stake.timeStaked.add(12 * 60 seconds);
-        // if (_stake.option == 3)
-        //     endTime = _stake.timeStaked.add(18 * 60 seconds);
+        if (_stake.option == 1) endTime = _stake.timeStaked.add(6 * 30 minutes);
+        if (_stake.option == 2)
+            endTime = _stake.timeStaked.add(12 * 30 minutes);
+        if (_stake.option == 3)
+            endTime = _stake.timeStaked.add(18 * 30 minutes);
 
-        if (_stake.option == 1) endTime = _stake.timeStaked.add(6 * 30 days);
-        if (_stake.option == 2) endTime = _stake.timeStaked.add(12 * 30 days);
-        if (_stake.option == 3) endTime = _stake.timeStaked.add(18 * 30 days);
+        // if (_stake.option == 1) endTime = _stake.timeStaked.add(6 * 30 days);
+        // if (_stake.option == 2) endTime = _stake.timeStaked.add(12 * 30 days);
+        // if (_stake.option == 3) endTime = _stake.timeStaked.add(18 * 30 days);
     }
 
     /// @notice Calculate available rewards of a stake
@@ -284,23 +284,24 @@ contract Staking is Ownable, ReentrancyGuard {
 
         require(!canClaim, "Stake time not finished");
 
-        uint256 amountToSend = _stake.amountStaked.add(rewards);
+        // Send staked amount from contract
+        require(
+            pgold.transferFrom(address(this), msg.sender, _stake.amountStaked),
+            "ERC20 transfer failed"
+        );
 
-        if (amountToSend > pgold.balanceOf(address(this))) {
-            // Send staked amount + rewards to user from pool address
-            require(
-                pgold.transferFrom(pool, msg.sender, amountToSend),
-                "ERC20 transfer failed"
-            );
-        } else {
-            // Send staked amount + rewards to user from pool this contract
-            require(
-                pgold.transferFrom(address(this), msg.sender, amountToSend),
-                "ERC20 transfer failed"
-            );
-        }
+        // Send rewards from pool address
+        require(
+            pgold.transferFrom(pool, msg.sender, rewards),
+            "ERC20 transfer failed"
+        );
 
-        emit Unstaked(msg.sender, stakeId, amountToSend, block.timestamp);
+        emit Unstaked(
+            msg.sender,
+            stakeId,
+            _stake.amountStaked.add(rewards),
+            block.timestamp
+        );
     }
 
     // OWNER SETTINGS
