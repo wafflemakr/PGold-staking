@@ -1,11 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
+import { endStake } from "../../web3";
 
 import {
   Container,
   Button,
   Row,
   ListGroup,
-  ListGroupItem
+  ListGroupItem,
+  Tooltip,
+  OverlayTrigger
 } from "react-bootstrap";
 
 const formatDate = timestamp => {
@@ -18,10 +21,24 @@ const formatDate = timestamp => {
     .replace("T", " ");
 };
 
-export default function StakeInfo({ info, goBack }) {
-  console.log(info);
+export default function StakeInfo({ account, info, goBack }) {
+  const [ending, setEnding] = useState(false);
+
+  const handleClaim = async () => {
+    try {
+      setEnding(true);
+      await endStake(info.id, account);
+      setEnding(false);
+
+      goBack();
+    } catch (error) {
+      setEnding(false);
+      console.log(error.message);
+    }
+  };
+
   return (
-    <Container className="justify-content-center">
+    <Container className="justify-content-center w-60">
       <ListGroup className="list-group-flush mb-3">
         <ListGroupItem>
           <strong>ID: </strong>
@@ -57,15 +74,34 @@ export default function StakeInfo({ info, goBack }) {
           <strong>Claim Time: </strong>
           <span>{formatDate(info.stakeEndTime)}</span>
         </ListGroupItem>
+
+        <ListGroupItem>
+          <strong>Claimed: </strong>
+          <span>{info.claimed ? "true" : "false"}</span>
+        </ListGroupItem>
       </ListGroup>
 
       <Row className="justify-content-around p-3">
-        <Button
-          disabled={!info.canClaim}
-          variant={info.canClaim ? "outline-info" : "outline-dark"}
-        >
-          END STAKE
-        </Button>
+        {!info.claimed && (
+          <OverlayTrigger
+            placement="right"
+            overlay={<Tooltip>Can't Claim Yet!</Tooltip>}
+          >
+            <Button
+              variant={info.canClaim ? "outline-info" : "outline-dark"}
+              onClick={info.canClaim ? handleClaim : null}
+            >
+              {ending ? (
+                <div className="d-flex align-items-center">
+                  ENDING
+                  <span className="loading ml-2"></span>
+                </div>
+              ) : (
+                "END STAKE"
+              )}
+            </Button>
+          </OverlayTrigger>
+        )}
         <Button variant="outline-dark" onClick={goBack}>
           BACK
         </Button>

@@ -39,6 +39,7 @@ export default function Dashboard({ account }) {
       setRegistering(false);
       checkUser();
     } catch (error) {
+      setRegistering(false);
       console.log(error.message);
     }
   };

@@ -33,6 +33,12 @@ export const createStake = async (amount, option, account) => {
     .send({ from: account });
 };
 
+export const endStake = async (stakeId, account) => {
+  await window.staking.methods.unstake(stakeId).send({ from: account });
+
+  return true;
+};
+
 export const getStakeList = async account => {
   const events = await window.staking.getPastEvents("Staked", {
     filter: { user: account },
@@ -54,7 +60,6 @@ export const getStakeDetails = async (account, stakeId) => {
   const stakeInfo = await window.staking.methods
     .getStakeDetails(account, stakeId)
     .call();
-  console.log(stakeInfo);
   stakeInfo.amountStaked = stakeInfo.amountStaked / 10 ** 4;
   stakeInfo.currentRewards = stakeInfo.currentRewards / 10 ** 4;
   stakeInfo.id = stakeId;

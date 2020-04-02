@@ -282,7 +282,7 @@ contract Staking is Ownable, ReentrancyGuard {
             stakeId
         );
 
-        require(!canClaim, "Stake time not finished");
+        require(canClaim, "Stake time not finished");
 
         // Send staked amount from contract
         require(

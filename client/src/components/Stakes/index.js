@@ -14,6 +14,8 @@ export default function Stakes({ account }) {
   const [loading, setLoading] = useState(true);
   const [stakeInfo, setStakeInfo] = useState(null);
 
+  console.log(stakes);
+
   const handleStakeCheck = async id => {
     const stakeDetails = await getStakeDetails(account, id);
     setStakeInfo(stakeDetails);
@@ -61,7 +63,11 @@ export default function Stakes({ account }) {
               />
             )}
             {show === "info" && (
-              <StakeInfo info={stakeInfo} goBack={() => setShow("list")} />
+              <StakeInfo
+                account={account}
+                info={stakeInfo}
+                goBack={() => setShow("list")}
+              />
             )}
           </Card.Body>
         </Card>
