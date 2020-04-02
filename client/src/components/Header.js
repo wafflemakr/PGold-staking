@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Navbar, Nav, Button } from "react-bootstrap";
+import { Navbar, Nav, Button, Row } from "react-bootstrap";
 
-export default function Header({ account, connectWeb3 }) {
+export default function Header({ account, connectWeb3, logout }) {
   const [expanded, setExpanded] = useState(false);
 
   let routes = (
@@ -27,6 +27,7 @@ export default function Header({ account, connectWeb3 }) {
       variant="dark"
       expanded={expanded}
       className="justify-content-between"
+      style={{ height: "70px" }}
     >
       <div>
         <Navbar.Toggle onClick={() => setExpanded(prev => !prev)} />
@@ -38,27 +39,37 @@ export default function Header({ account, connectWeb3 }) {
       </div>
       <div className="align-self-baseline">
         <Nav>
-          <Navbar.Text>
-            {account ? (
-              <>
-                <Nav.Link
-                  onClick={() => setExpanded(false)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href={`https://kovan.etherscan.io/address/${account}`}
-                >
-                  Connected to:{" "}
-                  {account.substring(0, 5) + "..." + account.substring(37, 42)}
-                </Nav.Link>
-              </>
-            ) : (
-              window.web3 && (
-                <Button className="mr-2" variant="info" onClick={connectWeb3}>
-                  Connect to Web3
+          {/* <Navbar.Text> */}
+          {account ? (
+            <Row className="mr-2">
+              <Nav.Link
+                className="align-self-center mr-2"
+                onClick={() => setExpanded(false)}
+                target="_blank"
+                rel="noopener noreferrer"
+                href={`https://rinkeby.etherscan.io/address/${account}`}
+              >
+                Connected to:{" "}
+                {account.substring(0, 5) + "..." + account.substring(37, 42)}
+              </Nav.Link>
+              <Nav.Link>
+                <Button variant="info" onClick={logout}>
+                  Logout
                 </Button>
-              )
-            )}
-          </Navbar.Text>
+              </Nav.Link>
+            </Row>
+          ) : (
+            window.web3 && (
+              <Row className="mr-2">
+                <Nav.Link>
+                  <Button className="mr-2" variant="info" onClick={connectWeb3}>
+                    Connect to Web3
+                  </Button>
+                </Nav.Link>
+              </Row>
+            )
+          )}
+          {/* </Navbar.Text> */}
         </Nav>
       </div>
     </Navbar>

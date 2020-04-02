@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { Switch, Router, Route, Redirect } from "react-router-dom";
 import { Container, Row } from "react-bootstrap";
 import "./App.css";
@@ -20,9 +20,14 @@ const Web3 = window.Web3;
 
 function App() {
   const [account, setAccount] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const logout = () => {
+    setAccount(null);
+  };
 
   const connectWeb3 = useCallback(async () => {
+    setLoading(true);
     // Modern dapp browsers...
     if (window.ethereum) {
       console.log("Using Ethereum enabled browser");
@@ -54,11 +59,12 @@ function App() {
     else {
       alert("Please Install Metamask");
     }
+    setLoading(false);
   }, []);
 
-  useEffect(() => {
-    connectWeb3().then(() => setLoading(false));
-  }, [account, connectWeb3]);
+  // useEffect(() => {
+  //   connectWeb3().then(() => setLoading(false));
+  // }, [account, connectWeb3]);
 
   const routes = (
     <Switch>
@@ -74,11 +80,12 @@ function App() {
       <Redirect to="/" />
     </Switch>
   );
+
   if (loading)
     return (
       <Container>
         <Router history={history}>
-          <Header account={account} connectWeb3={connectWeb3} />
+          <Header account={account} logout={logout} connectWeb3={connectWeb3} />
           <Row className="justify-content-center mt-5">
             <ReactLoading
               className="text-center"
@@ -96,7 +103,7 @@ function App() {
     return (
       <Container>
         <Router history={history}>
-          <Header account={account} connectWeb3={connectWeb3} />
+          <Header account={account} logout={logout} connectWeb3={connectWeb3} />
           <div className="p-5">
             <h3>Connect to your web3 Wallet</h3>
           </div>
@@ -108,7 +115,7 @@ function App() {
     return (
       <Container>
         <Router history={history}>
-          <Header account={account} connectWeb3={connectWeb3} />
+          <Header account={account} logout={logout} connectWeb3={connectWeb3} />
           <div className="p-5">
             <h3> Please switch to Rinkeby Network</h3>
           </div>
@@ -118,7 +125,7 @@ function App() {
   return (
     <Container>
       <Router history={history}>
-        <Header account={account} connectWeb3={connectWeb3} />
+        <Header account={account} logout={logout} connectWeb3={connectWeb3} />
         {routes}
       </Router>
     </Container>
