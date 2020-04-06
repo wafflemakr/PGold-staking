@@ -50,7 +50,7 @@ export default function Header({ account, connectWeb3, logout }) {
                 href={`https://rinkeby.etherscan.io/address/${account}`}
               >
                 Connected to:{" "}
-                {account.substring(0, 5) + "..." + account.substring(37, 42)}
+                {account.substring(0, 4) + "..." + account.substring(38, 42)}
               </Nav.Link>
               <Nav.Link>
                 <Button variant="info" onClick={logout}>

@@ -1,6 +1,6 @@
 import { STAKING_CONTRACT, ZERO_ADDRESS } from "./constants";
 
-export const getUserInfo = async user => {
+export const getUserInfo = async (user) => {
   const userInfo = await window.staking.methods.getUserInfo(user).call();
   const balance = await window.token.methods.balanceOf(user).call();
   userInfo.balance = +balance / 10 ** 4;
@@ -15,8 +15,6 @@ export const checkApproval = async (account, amount) => {
   const allowance = await window.token.methods
     .allowance(account, STAKING_CONTRACT)
     .call();
-
-  console.log(allowance, amount);
 
   if (allowance < amount)
     await window.token.methods
@@ -39,10 +37,10 @@ export const endStake = async (stakeId, account) => {
   return true;
 };
 
-export const getStakeList = async account => {
+export const getStakeList = async (account) => {
   const events = await window.staking.getPastEvents("Staked", {
     filter: { user: account },
-    fromBlock: 0
+    fromBlock: 0,
   });
 
   return events.map(({ returnValues }) => {
@@ -51,7 +49,7 @@ export const getStakeList = async account => {
       amount: returnValues.amountToken / 10 ** 4,
       rate: `${Number(returnValues.rate / 1000).toFixed(2)} %`,
       startTime: returnValues.timestamp,
-      endTime: returnValues.timestamp
+      endTime: returnValues.timestamp,
     };
   });
 };

@@ -20,7 +20,7 @@ export default function StakeList({ stakes, checkInfo }) {
             style={{ cursor: "pointer" }}
           >
             <td>{s.id}</td>
-            <td>{s.amount}</td>
+            <td>{new Intl.NumberFormat("en-US").format(s.amount)}</td>
             <td>{s.rate}</td>
           </tr>
         ))}

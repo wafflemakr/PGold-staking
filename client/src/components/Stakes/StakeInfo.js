@@ -8,17 +8,13 @@ import {
   ListGroup,
   ListGroupItem,
   Tooltip,
-  OverlayTrigger
+  OverlayTrigger,
 } from "react-bootstrap";
 
-const formatDate = timestamp => {
+const formatDate = (timestamp) => {
   let date = new Date(null);
   date.setSeconds(timestamp);
-  return date
-    .toISOString()
-    .slice(0, 19)
-    .replace(/-/g, "/")
-    .replace("T", " ");
+  return date.toISOString().slice(0, 19).replace(/-/g, "/").replace("T", " ");
 };
 
 export default function StakeInfo({ account, info, goBack }) {
@@ -27,6 +23,7 @@ export default function StakeInfo({ account, info, goBack }) {
   const handleClaim = async () => {
     try {
       setEnding(true);
+      console.log(info.id, account);
       await endStake(info.id, account);
       setEnding(false);
 
@@ -47,7 +44,9 @@ export default function StakeInfo({ account, info, goBack }) {
 
         <ListGroupItem>
           <strong>Amount: </strong>
-          <span>{info.amountStaked} GOLD</span>
+          <span>
+            {new Intl.NumberFormat("en-US").format(info.amountStaked)} GOLD
+          </span>
         </ListGroupItem>
 
         <ListGroupItem>
@@ -62,7 +61,12 @@ export default function StakeInfo({ account, info, goBack }) {
 
         <ListGroupItem>
           <strong>Current Rewards: </strong>
-          <span>{info.currentRewards} GOLD</span>
+          <span>
+            {new Intl.NumberFormat("en-US", {
+              maximumSignificantDigits: 20,
+            }).format(info.currentRewards)}{" "}
+            GOLD
+          </span>
         </ListGroupItem>
 
         <ListGroupItem>
@@ -85,7 +89,11 @@ export default function StakeInfo({ account, info, goBack }) {
         {!info.claimed && (
           <OverlayTrigger
             placement="right"
-            overlay={<Tooltip>Can't Claim Yet!</Tooltip>}
+            overlay={
+              <Tooltip>
+                {info.canClaim ? "Claim your Rewards!" : "Can't Claim Yet!"}
+              </Tooltip>
+            }
           >
             <Button
               variant={info.canClaim ? "outline-info" : "outline-dark"}

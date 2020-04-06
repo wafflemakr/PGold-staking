@@ -286,7 +286,7 @@ contract Staking is Ownable, ReentrancyGuard {
 
         // Send staked amount from contract
         require(
-            pgold.transferFrom(address(this), msg.sender, _stake.amountStaked),
+            pgold.transfer(msg.sender, _stake.amountStaked),
             "ERC20 transfer failed"
         );
 

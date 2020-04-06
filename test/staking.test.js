@@ -9,10 +9,10 @@ const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 contract("Staking", ([owner, user1, user2, user3, random]) => {
   let staking;
 
-  const getLastEvent = async eventName => {
+  const getLastEvent = async (eventName) => {
     const events = await staking.getPastEvents(eventName, {
       fromBlock: 0,
-      toBlock: "latest"
+      toBlock: "latest",
     });
     return events.pop().returnValues;
   };
@@ -54,7 +54,7 @@ contract("Staking", ([owner, user1, user2, user3, random]) => {
         referrer,
         activeStakes,
         amountReferees,
-        isRegistered
+        isRegistered,
       } = await staking.getUserInfo(user1);
 
       assert.equal(referrer, owner);
@@ -68,7 +68,7 @@ contract("Staking", ([owner, user1, user2, user3, random]) => {
         referrer,
         activeStakes,
         amountReferees,
-        isRegistered
+        isRegistered,
       } = await staking.getUserInfo(owner);
 
       assert.equal(referrer, ZERO_ADDRESS);
@@ -100,13 +100,12 @@ contract("Staking", ([owner, user1, user2, user3, random]) => {
     });
 
     it("correct Staked event", async () => {
-      const { user, stakeId, amountToken, option } = await getLastEvent(
-        "Staked"
-      );
+      const { user, stakeId, amountToken, rate } = await getLastEvent("Staked");
+
       assert.equal(user, user1);
       assert.equal(stakeId, 1);
       assert.equal(amountToken, STAKE_AMOUNT);
-      assert.equal(option, 1);
+      assert.equal(rate, 5000);
     });
 
     it("correct stake info", async () => {
@@ -130,7 +129,10 @@ contract("Staking", ([owner, user1, user2, user3, random]) => {
 
     it("user can unstake after expiration", async () => {
       // 6 months  and 1 second after
-      await advanceTimeAndBlock(180 * 24 * 60 * 60 + 1);
+      // await advanceTimeAndBlock(180 * 24 * 60 * 60 + 1);
+
+      // 6*30 min + 1 sec after
+      await advanceTimeAndBlock(6 * 30 * 60 * 60 + 1);
       await staking.unstake(1, { from: user1 });
     });
 
@@ -141,13 +143,13 @@ contract("Staking", ([owner, user1, user2, user3, random]) => {
         user1,
         1
       );
-      const reward = await staking.calculateRewards(user1, 1);
+      const { rewards } = await staking.calculateRewards(user1, 1);
       const { user, stakeId, amountToken } = await getLastEvent("Unstaked");
 
       assert.equal(user, user1);
       assert.equal(stakeId, 1);
       assert.equal(
-        reward,
+        rewards,
         Math.floor(
           Number(
             (amountStaked * (block.timestamp - timeStaked) * rate) /

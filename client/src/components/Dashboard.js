@@ -5,8 +5,9 @@ import {
   ListGroup,
   Button,
   Row,
-  Form
+  Form,
 } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import { MdContentCopy } from "react-icons/md"; // Material Design
 import copy from "copy-to-clipboard";
 import ReactLoading from "react-loading";
@@ -29,8 +30,13 @@ export default function Dashboard({ account }) {
     amount: "",
     option: "1",
     modal: false,
-    waiting: false
+    waiting: false,
   });
+
+  const handleCopy = () => {
+    copy(window.location.href + account);
+    alert("Copied!");
+  };
 
   const handleRegister = async () => {
     try {
@@ -56,7 +62,7 @@ export default function Dashboard({ account }) {
   };
 
   const checkUser = useCallback(() => {
-    getUserInfo(account).then(userInfo => {
+    getUserInfo(account).then((userInfo) => {
       setUserInfo(userInfo);
       setLoading(false);
     });
@@ -93,17 +99,23 @@ export default function Dashboard({ account }) {
               <ListGroup className="list-group-flush">
                 <ListGroupItem>
                   <strong>Referrer: </strong>
-                  <a
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    href={`https://kovan.etherscan.io/address/${userInfo.referrer}`}
-                  >
-                    {userInfo.referrer}
-                  </a>
+                  {userInfo.referrer === ZERO_ADDRESS ? (
+                    "(none)"
+                  ) : (
+                    <a
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      href={`https://rinkeby.etherscan.io/address/${userInfo.referrer}`}
+                    >
+                      {userInfo.referrer}
+                    </a>
+                  )}
                 </ListGroupItem>
                 <ListGroupItem>
                   <strong>Active Stakes: </strong>
-                  <span>{userInfo.activeStakes}</span>
+                  <span>
+                    <Link to="/stakes">{userInfo.activeStakes}</Link>
+                  </span>
                 </ListGroupItem>
 
                 <ListGroupItem>
@@ -112,7 +124,9 @@ export default function Dashboard({ account }) {
                 </ListGroupItem>
                 <ListGroupItem>
                   <strong>PGOLD Balance: </strong>
-                  <span>{userInfo.balance}</span>
+                  <span>
+                    {new Intl.NumberFormat("en-US").format(userInfo.balance)}
+                  </span>
                 </ListGroupItem>
 
                 <ListGroupItem>
@@ -121,7 +135,7 @@ export default function Dashboard({ account }) {
                     {window.location.href + account}
                     <span>
                       <MdContentCopy
-                        onClick={() => copy(window.location.href + account)}
+                        onClick={handleCopy}
                         data-toggle="tooltip"
                         title="Copy Ref Link"
                         style={{ cursor: "pointer" }}
@@ -185,7 +199,7 @@ export default function Dashboard({ account }) {
           style={{ width: "80%" }}
           type="text"
           placeholder="Enter your referrer address"
-          onChange={e => setReferrer(e.target.value)}
+          onChange={(e) => setReferrer(e.target.value)}
           value={referrer}
         />
       </Modal>
@@ -203,7 +217,7 @@ export default function Dashboard({ account }) {
           type="number"
           max={Number(userInfo.balance)}
           placeholder="Enter amount of tokens to stake"
-          onChange={e => setStake({ ...stake, amount: e.target.value })}
+          onChange={(e) => setStake({ ...stake, amount: e.target.value })}
           value={stake.amount}
         />
         <div key={`inline-radio`} className="mt-3 mb-2">
@@ -217,7 +231,7 @@ export default function Dashboard({ account }) {
             type="radio"
             id={`inline-radio-1`}
             checked={stake.option === "1"}
-            onChange={e => setStake({ ...stake, option: "1" })}
+            onChange={(e) => setStake({ ...stake, option: "1" })}
             value="1"
           />
 
@@ -227,7 +241,7 @@ export default function Dashboard({ account }) {
             type="radio"
             id={`inline-radio-2`}
             checked={stake.option === "2"}
-            onChange={e => setStake({ ...stake, option: "2" })}
+            onChange={(e) => setStake({ ...stake, option: "2" })}
             value="2"
           />
 
@@ -238,7 +252,7 @@ export default function Dashboard({ account }) {
             id={`inline-radio-3`}
             value="3"
             checked={stake.option === "3"}
-            onChange={e => setStake({ ...stake, option: "3" })}
+            onChange={(e) => setStake({ ...stake, option: "3" })}
           />
         </div>
       </Modal>
