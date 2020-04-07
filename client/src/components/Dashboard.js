@@ -57,6 +57,7 @@ export default function Dashboard({ account }) {
       setStake({ ...stake, waiting: false, modal: false });
       checkUser();
     } catch (error) {
+      setStake({ ...stake, waiting: false, modal: false });
       console.log(error.message);
     }
   };

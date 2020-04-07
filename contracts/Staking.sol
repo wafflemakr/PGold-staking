@@ -284,6 +284,8 @@ contract Staking is Ownable, ReentrancyGuard {
 
         require(canClaim, "Stake time not finished");
 
+        _stake.claimed = true;
+
         // Send staked amount from contract
         require(
             pgold.transfer(msg.sender, _stake.amountStaked),
