@@ -128,15 +128,20 @@ contract Staking is Ownable, ReentrancyGuard {
 
         uint256 secondsPassed = block.timestamp.sub(_stake.timeStaked);
 
-        rewards = _stake
-            .amountStaked
-            .mul(secondsPassed)
-            .mul(_stake.rate)
-            .div(1000) // format rate to decimal
-            .div(100) // format to percentage
-            .div(365 days); // format per second
-        if (block.timestamp > getStakeEndTime(user, stakeId)) {
-            canClaim = true;
+        if (_stake.claimed) {
+            rewards = 0;
+            canClaim = false;
+        } else {
+            rewards = _stake
+                .amountStaked
+                .mul(secondsPassed)
+                .mul(_stake.rate)
+                .div(1000) // format rate to decimal
+                .div(100) // format to percentage
+                .div(365 days); // format per second
+            if (block.timestamp > getStakeEndTime(user, stakeId)) {
+                canClaim = true;
+            }
         }
     }
 
@@ -174,7 +179,7 @@ contract Staking is Ownable, ReentrancyGuard {
             uint8 option
         )
     {
-        Stake storage _stake = userStakesById[user][stakeId];
+        Stake memory _stake = userStakesById[user][stakeId];
 
         amountStaked = _stake.amountStaked;
         timeStaked = _stake.timeStaked;
@@ -272,7 +277,7 @@ contract Staking is Ownable, ReentrancyGuard {
     /// @notice Unstake specific stake of PGOLD Tokens
     function unstake(uint256 stakeId) external nonReentrant {
         User storage user = userByAddress[msg.sender];
-        Stake storage _stake = userStakesById[msg.sender][stakeId];
+        Stake memory _stake = userStakesById[msg.sender][stakeId];
 
         require(!_stake.claimed, "Staked already claimed");
         require(user.stakes.exists(stakeId), "Not stake owner");

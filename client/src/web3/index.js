@@ -43,6 +43,13 @@ export const getStakeList = async (account) => {
     fromBlock: 0,
   });
 
+  let unstakeEvents = await window.staking.getPastEvents("Unstaked", {
+    filter: { user: account },
+    fromBlock: 0,
+  });
+
+  unstakeEvents = unstakeEvents.map((e) => e.returnValues.stakeId);
+
   return events.map(({ returnValues }) => {
     return {
       id: returnValues.stakeId,
@@ -50,6 +57,7 @@ export const getStakeList = async (account) => {
       rate: `${Number(returnValues.rate / 1000).toFixed(2)} %`,
       startTime: returnValues.timestamp,
       endTime: returnValues.timestamp,
+      claimed: unstakeEvents.includes(returnValues.stakeId),
     };
   });
 };
