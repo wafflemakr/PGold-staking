@@ -106,16 +106,9 @@ contract Staking is Ownable, ReentrancyGuard {
     {
         Stake memory _stake = userStakesById[user][stakeId];
 
-        // Testing timeframes
-        if (_stake.option == 1) endTime = _stake.timeStaked.add(6 * 30 minutes);
-        if (_stake.option == 2)
-            endTime = _stake.timeStaked.add(12 * 30 minutes);
-        if (_stake.option == 3)
-            endTime = _stake.timeStaked.add(18 * 30 minutes);
-
-        // if (_stake.option == 1) endTime = _stake.timeStaked.add(6 * 30 days);
-        // if (_stake.option == 2) endTime = _stake.timeStaked.add(12 * 30 days);
-        // if (_stake.option == 3) endTime = _stake.timeStaked.add(18 * 30 days);
+        if (_stake.option == 1) endTime = _stake.timeStaked.add(6 * 30 days);
+        if (_stake.option == 2) endTime = _stake.timeStaked.add(12 * 30 days);
+        if (_stake.option == 3) endTime = _stake.timeStaked.add(18 * 30 days);
     }
 
     /// @notice Calculate available rewards of a stake
@@ -235,13 +228,8 @@ contract Staking is Ownable, ReentrancyGuard {
         onlyActive
         onlyRegistered
         validOption(option)
+        nonReentrant
     {
-        // Deposit user's
-        require(
-            pgold.transferFrom(msg.sender, address(this), amount),
-            "ERC20 transfer failed"
-        );
-
         User storage user = userByAddress[msg.sender];
         user.totalStakes++;
 
@@ -264,6 +252,12 @@ contract Staking is Ownable, ReentrancyGuard {
         );
 
         user.stakes.insert(user.totalStakes);
+
+        // Deposit user's
+        require(
+            pgold.transferFrom(msg.sender, address(this), amount),
+            "ERC20 transfer failed"
+        );
 
         emit Staked(
             msg.sender,
@@ -325,13 +319,13 @@ contract Staking is Ownable, ReentrancyGuard {
         isPaused = true;
     }
 
-    /// @notice Set new token address
-    function setTokenAddress(IERC20 _pgold) external onlyOwner {
-        pgold = _pgold;
-    }
-
     /// @notice Set pool address where contract can transfer tokens from
     function setPoolAddress(address _pool) external onlyOwner {
         pool = _pool;
+    }
+
+    /// @notice Fallback function
+    function() external payable {
+        revert();
     }
 }

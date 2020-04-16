@@ -129,10 +129,10 @@ contract("Staking", ([owner, user1, user2, user3, random]) => {
 
     it("user can unstake after expiration", async () => {
       // 6 months  and 1 second after
-      // await advanceTimeAndBlock(180 * 24 * 60 * 60 + 1);
+      await advanceTimeAndBlock(180 * 24 * 60 * 60 + 1);
 
       // 6*30 min + 1 sec after
-      await advanceTimeAndBlock(6 * 30 * 60 * 60 + 1);
+      // await advanceTimeAndBlock(6 * 30 * 60 * 60 + 1);
       await staking.unstake(1, { from: user1 });
     });
 

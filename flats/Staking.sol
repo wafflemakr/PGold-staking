@@ -641,7 +641,7 @@ contract Staking is Ownable, ReentrancyGuard {
         uint256 stakeId,
         uint256 amountToken,
         uint256 timestamp,
-        uint8 option
+        uint256 rate
     );
     event Unstaked(
         address indexed user,
@@ -722,11 +722,11 @@ contract Staking is Ownable, ReentrancyGuard {
         Stake memory _stake = userStakesById[user][stakeId];
 
         // Testing timeframes
-        if (_stake.option == 1) endTime = _stake.timeStaked.add(6 * 60 seconds);
+        if (_stake.option == 1) endTime = _stake.timeStaked.add(6 * 30 minutes);
         if (_stake.option == 2)
-            endTime = _stake.timeStaked.add(12 * 60 seconds);
+            endTime = _stake.timeStaked.add(12 * 30 minutes);
         if (_stake.option == 3)
-            endTime = _stake.timeStaked.add(18 * 60 seconds);
+            endTime = _stake.timeStaked.add(18 * 30 minutes);
 
         // if (_stake.option == 1) endTime = _stake.timeStaked.add(6 * 30 days);
         // if (_stake.option == 2) endTime = _stake.timeStaked.add(12 * 30 days);
@@ -737,19 +737,26 @@ contract Staking is Ownable, ReentrancyGuard {
     function calculateRewards(address user, uint256 stakeId)
         public
         view
-        returns (uint256 rewards)
+        returns (uint256 rewards, bool canClaim)
     {
         Stake memory _stake = userStakesById[user][stakeId];
 
-        if (block.timestamp > getStakeEndTime(user, stakeId)) {
-            uint256 timePassed = block.timestamp.sub(_stake.timeStaked);
+        uint256 secondsPassed = block.timestamp.sub(_stake.timeStaked);
 
+        if (_stake.claimed) {
+            rewards = 0;
+            canClaim = false;
+        } else {
             rewards = _stake
                 .amountStaked
-                .mul(timePassed)
-                .mul(rates[_stake.option])
-                .div(1000)
-                .div(365 days);
+                .mul(secondsPassed)
+                .mul(_stake.rate)
+                .div(1000) // format rate to decimal
+                .div(100) // format to percentage
+                .div(365 days); // format per second
+            if (block.timestamp > getStakeEndTime(user, stakeId)) {
+                canClaim = true;
+            }
         }
     }
 
@@ -778,15 +785,16 @@ contract Staking is Ownable, ReentrancyGuard {
         view
         returns (
             uint256 amountStaked,
-            uint256 availableRewards,
+            uint256 currentRewards,
             uint256 stakeEndTime,
             uint256 timeStaked,
             uint256 rate,
             bool claimed,
+            bool canClaim,
             uint8 option
         )
     {
-        Stake storage _stake = userStakesById[user][stakeId];
+        Stake memory _stake = userStakesById[user][stakeId];
 
         amountStaked = _stake.amountStaked;
         timeStaked = _stake.timeStaked;
@@ -794,7 +802,7 @@ contract Staking is Ownable, ReentrancyGuard {
         claimed = _stake.claimed;
         option = _stake.option;
 
-        availableRewards = calculateRewards(user, stakeId);
+        (currentRewards, canClaim) = calculateRewards(user, stakeId);
         stakeEndTime = getStakeEndTime(user, stakeId);
     }
 
@@ -803,7 +811,11 @@ contract Staking is Ownable, ReentrancyGuard {
     /// @notice User Registration with referral Id
     /// @param refAddress user's referrer address
     function register(address refAddress) external {
-        // If register with a referral link, address is not empty
+        User memory user = userByAddress[msg.sender];
+
+        require(!user.registered, "You cannot register again");
+
+        // If user registers with a referral link
         if (refAddress != address(0)) {
             User storage user = userByAddress[refAddress];
             if (user.registered) {
@@ -811,11 +823,13 @@ contract Staking is Ownable, ReentrancyGuard {
                 user.referees.insert(msg.sender);
             }
         }
+
         _createUser(refAddress);
 
         emit NewUser(msg.sender, refAddress);
     }
 
+    /// @dev internal function to create user
     function _createUser(address refAddress) internal {
         // Create new ref Id for user
         totalUsers++;
@@ -846,9 +860,12 @@ contract Staking is Ownable, ReentrancyGuard {
         User storage user = userByAddress[msg.sender];
         user.totalStakes++;
 
-        uint256 amountReferees = user.referees.count();
-
-        uint256 stakeRate = rates[option].add(amountReferees.mul(1000));
+        // Calculate stake rate for given option
+        uint256 refereesCountReward = user.referees.count().mul(1000); // add +1% for each referee
+        uint256 refLinkReward = user.referrer != address(0) ? 2000 : 0; // add +2% if used ref link
+        uint256 stakeRate = rates[option].add(refereesCountReward).add(
+            refLinkReward
+        );
 
         // If rate greater than 15% lower it to 15%
         if (stakeRate > 15000) stakeRate = 15000;
@@ -868,41 +885,45 @@ contract Staking is Ownable, ReentrancyGuard {
             user.totalStakes,
             amount,
             block.timestamp,
-            option
+            stakeRate
         );
     }
 
     /// @notice Unstake specific stake of PGOLD Tokens
     function unstake(uint256 stakeId) external nonReentrant {
         User storage user = userByAddress[msg.sender];
-        Stake storage _stake = userStakesById[msg.sender][stakeId];
+        Stake memory _stake = userStakesById[msg.sender][stakeId];
 
         require(!_stake.claimed, "Staked already claimed");
         require(user.stakes.exists(stakeId), "Not stake owner");
-        require(
-            block.timestamp > getStakeEndTime(msg.sender, stakeId),
-            "Stake time not finished"
+
+        (uint256 rewards, bool canClaim) = calculateRewards(
+            msg.sender,
+            stakeId
         );
 
-        uint256 rewards = calculateRewards(msg.sender, stakeId);
+        require(canClaim, "Stake time not finished");
 
-        uint256 amountToSend = _stake.amountStaked.add(rewards);
+        _stake.claimed = true;
 
-        if (amountToSend > pgold.balanceOf(address(this))) {
-            // Send staked amount + rewards to user from pool address
-            require(
-                pgold.transferFrom(pool, msg.sender, amountToSend),
-                "ERC20 transfer failed"
-            );
-        } else {
-            // Send staked amount + rewards to user from pool this contract
-            require(
-                pgold.transferFrom(address(this), msg.sender, amountToSend),
-                "ERC20 transfer failed"
-            );
-        }
+        // Send staked amount from contract
+        require(
+            pgold.transfer(msg.sender, _stake.amountStaked),
+            "ERC20 transfer failed"
+        );
 
-        emit Unstaked(msg.sender, stakeId, amountToSend, block.timestamp);
+        // Send rewards from pool address
+        require(
+            pgold.transferFrom(pool, msg.sender, rewards),
+            "ERC20 transfer failed"
+        );
+
+        emit Unstaked(
+            msg.sender,
+            stakeId,
+            _stake.amountStaked.add(rewards),
+            block.timestamp
+        );
     }
 
     // OWNER SETTINGS

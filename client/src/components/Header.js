@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Navbar, Nav, Button, Row } from "react-bootstrap";
 
-export default function Header({ account, connectWeb3, logout }) {
+export default function Header({ account, connectWeb3, logout, isPool }) {
   const [expanded, setExpanded] = useState(false);
 
   let routes = (
@@ -16,6 +16,11 @@ export default function Header({ account, connectWeb3, logout }) {
       <Nav.Link as={NavLink} to="/reward" exact>
         Reward Program
       </Nav.Link>
+      {isPool && (
+        <Nav.Link as={NavLink} to="/admin" exact>
+          Admin Panel
+        </Nav.Link>
+      )}
     </>
   );
 
@@ -30,7 +35,7 @@ export default function Header({ account, connectWeb3, logout }) {
       style={{ height: "70px" }}
     >
       <div>
-        <Navbar.Toggle onClick={() => setExpanded(prev => !prev)} />
+        <Navbar.Toggle onClick={() => setExpanded((prev) => !prev)} />
         <Navbar.Collapse id="responsive-navbar-nav">
           <Nav className="mr-auto" onClick={() => setExpanded(false)}>
             {routes}

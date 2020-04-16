@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Switch, Router, Route, Redirect } from "react-router-dom";
 import { Container, Row } from "react-bootstrap";
 import "./App.css";
@@ -7,6 +7,7 @@ import Header from "./components/Header";
 import Dashboard from "./components/Dashboard";
 import Stakes from "./components/Stakes/";
 import RewardProgram from "./components/RewardProgram";
+import Admin from "./components/Admin";
 import ReactLoading from "react-loading";
 
 import history from "./history";
@@ -21,6 +22,7 @@ const Web3 = window.Web3;
 function App() {
   const [account, setAccount] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isPool, setIsPool] = useState(false);
 
   const logout = () => {
     setAccount(null);
@@ -46,7 +48,7 @@ function App() {
         setAccount(window.ethereum.selectedAddress);
 
         //If accounts change
-        window.ethereum.on("accountsChanged", accounts => {
+        window.ethereum.on("accountsChanged", (accounts) => {
           console.log("accounts changed");
           if (accounts.length > 0) setAccount(accounts[0]);
           else setAccount(null);
@@ -62,12 +64,21 @@ function App() {
     setLoading(false);
   }, []);
 
-  // useEffect(() => {
-  //   connectWeb3().then(() => setLoading(false));
-  // }, [account, connectWeb3]);
+  useEffect(() => {
+    const checkPool = async () => {
+      const _pool = await window.staking.methods.pool().call();
+      setIsPool(_pool === window.web3.utils.toChecksumAddress(account));
+    };
+    if (window.staking && account) checkPool();
+  }, [account]);
 
   const routes = (
     <Switch>
+      {isPool && (
+        <Route path="/admin">
+          <Admin account={account} />
+        </Route>
+      )}
       <Route path="/stakes" exact>
         <Stakes account={account} />
       </Route>
@@ -125,7 +136,12 @@ function App() {
   return (
     <Container>
       <Router history={history}>
-        <Header account={account} logout={logout} connectWeb3={connectWeb3} />
+        <Header
+          account={account}
+          logout={logout}
+          connectWeb3={connectWeb3}
+          isPool={isPool}
+        />
         {routes}
       </Router>
     </Container>
