@@ -122,6 +122,11 @@ export default [
     type: "constructor",
   },
   {
+    payable: true,
+    stateMutability: "payable",
+    type: "fallback",
+  },
+  {
     anonymous: false,
     inputs: [
       {
@@ -165,6 +170,11 @@ export default [
         indexed: false,
         name: "rate",
         type: "uint256",
+      },
+      {
+        indexed: false,
+        name: "option",
+        type: "uint8",
       },
     ],
     name: "Staked",
@@ -405,20 +415,6 @@ export default [
     constant: false,
     inputs: [],
     name: "unPauseContract",
-    outputs: [],
-    payable: false,
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    constant: false,
-    inputs: [
-      {
-        name: "_pgold",
-        type: "address",
-      },
-    ],
-    name: "setTokenAddress",
     outputs: [],
     payable: false,
     stateMutability: "nonpayable",

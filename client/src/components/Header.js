@@ -32,11 +32,10 @@ export default function Header({ account, connectWeb3, logout, isPool }) {
       variant="dark"
       expanded={expanded}
       className="justify-content-between"
-      style={{ height: "70px" }}
     >
       <div>
         <Navbar.Toggle onClick={() => setExpanded((prev) => !prev)} />
-        <Navbar.Collapse id="responsive-navbar-nav">
+        <Navbar.Collapse>
           <Nav className="mr-auto" onClick={() => setExpanded(false)}>
             {routes}
           </Nav>
@@ -44,7 +43,6 @@ export default function Header({ account, connectWeb3, logout, isPool }) {
       </div>
       <div className="align-self-baseline">
         <Nav>
-          {/* <Navbar.Text> */}
           {account ? (
             <Row className="mr-2">
               <Nav.Link
@@ -74,7 +72,6 @@ export default function Header({ account, connectWeb3, logout, isPool }) {
               </Row>
             )
           )}
-          {/* </Navbar.Text> */}
         </Nav>
       </div>
     </Navbar>

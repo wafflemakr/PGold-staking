@@ -37,11 +37,28 @@ export const endStake = async (stakeId, account) => {
   return true;
 };
 
+const calculateEndTime = ({ option = 1, timestamp }) => {
+  const MONTHS = 30 * 24 * 30 * 30;
+  const startTime = Number(timestamp);
+  switch (Number(option)) {
+    case 1:
+      return startTime + 6 * MONTHS;
+    case 2:
+      return startTime + 12 * MONTHS;
+    case 3:
+      return startTime + 18 * MONTHS;
+    default:
+      return 0;
+  }
+};
+
 export const getStakeList = async (account) => {
   const events = await window.staking.getPastEvents("Staked", {
     filter: { user: account },
     fromBlock: 0,
   });
+
+  console.log(events);
 
   let unstakeEvents = await window.staking.getPastEvents("Unstaked", {
     filter: { user: account },
@@ -56,7 +73,7 @@ export const getStakeList = async (account) => {
       amount: returnValues.amountToken / 10 ** 4,
       rate: `${Number(returnValues.rate / 1000).toFixed(2)} %`,
       startTime: returnValues.timestamp,
-      endTime: returnValues.timestamp,
+      endTime: calculateEndTime(returnValues),
       claimed: unstakeEvents.includes(returnValues.stakeId),
     };
   });

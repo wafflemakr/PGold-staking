@@ -26,7 +26,8 @@ contract Staking is Ownable, ReentrancyGuard {
         uint256 stakeId,
         uint256 amountToken,
         uint256 timestamp,
-        uint256 rate
+        uint256 rate,
+        uint8 option
     );
     event Unstaked(
         address indexed user,
@@ -264,7 +265,8 @@ contract Staking is Ownable, ReentrancyGuard {
             user.totalStakes,
             amount,
             block.timestamp,
-            stakeRate
+            stakeRate,
+            option
         );
     }
 
