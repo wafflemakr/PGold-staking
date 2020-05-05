@@ -187,6 +187,18 @@ export default function Dashboard({ account }) {
             </Row>
           </Card.Footer>
         </Card>
+        <p className="text-warning font-weight-bold">
+          DISCLAIMER: There is no warranty. We do not assume any responsibility
+          for bugs, vulnerabilities, or any other technical defects in the
+          Staking smart contract. Use it at your own risk.
+        </p>
+
+        <p className="text-center">
+          Contract Address:{" "}
+          <a href="https://etherscan.io/address/0xe53d86543b98a60231fa55ada4d90c48c9fad382">
+            0xe53d86543b98a60231fa55ada4d90c48c9fad382
+          </a>
+        </p>
       </div>
       <Modal
         modalOpen={registerModal}

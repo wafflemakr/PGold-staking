@@ -13,7 +13,7 @@ export default function Admin({ account }) {
   const handleApprove = async () => {
     try {
       await window.token.methods
-        .approve(STAKING_CONTRACT, window.web3.utils.toWei(approve.amount))
+        .approve(STAKING_CONTRACT, +approve.amount * 10 ** 4)
         .send({ from: account });
     } catch (error) {
       console.log(error);

@@ -16,7 +16,7 @@ import { STAKING_CONTRACT, TOKEN_ADDRESS } from "./web3/constants";
 import erc20Abi from "./web3/abis/erc20";
 import stakingAbi from "./web3/abis/staking";
 
-const netId = "4";
+const netId = "1";
 const Web3 = window.Web3;
 
 function App() {
@@ -128,7 +128,7 @@ function App() {
         <Router history={history}>
           <Header account={account} logout={logout} connectWeb3={connectWeb3} />
           <div className="p-5">
-            <h3> Please switch to Rinkeby Network</h3>
+            <h3> Please switch to Ethereum Mainnet</h3>
           </div>
         </Router>
       </Container>

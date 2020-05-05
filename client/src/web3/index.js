@@ -58,8 +58,6 @@ export const getStakeList = async (account) => {
     fromBlock: 0,
   });
 
-  console.log(events);
-
   let unstakeEvents = await window.staking.getPastEvents("Unstaked", {
     filter: { user: account },
     fromBlock: 0,
